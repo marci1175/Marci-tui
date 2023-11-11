@@ -1,18 +1,36 @@
-use std::time::Duration;
-
 use colored::{ColoredString, Colorize};
-use crossterm::terminal::{ClearType, Clear};
-use device_query::{device_state, DeviceState, Keycode};
-#[derive(Clone, Debug)]
-struct Term_State {
-    needs_redraw: bool,
-    screen_lines: Vec<ColoredString>,
-    let_button: bool,
+use crossterm::terminal::{Clear, ClearType};
+use device_query::{DeviceState, Keycode};
+
+impl Widgets {
+
+    pub fn button(text : impl ToString + std::fmt::Display) {
+        println!("{text}");
+    }
+
+    pub fn label(text : impl ToString + std::fmt::Display) {
+        println!("{text}");
+    }
 }
 
-impl Default for Term_State {
+#[derive(Clone, Debug)]
+struct Widgets {}
+
+#[derive(Clone, Debug)]
+struct TermState {
+    screen_lines: Vec<ColoredString>,
+    let_button: bool,
+    //navigation
+    current_index: usize,
+}
+
+impl Default for TermState {
     fn default() -> Self {
-        Self { needs_redraw: true, screen_lines: Vec::new(), let_button: false }
+        Self {
+            screen_lines: Vec::new(),
+            let_button: false,
+            current_index: 0,
+        }
     }
 }
 
@@ -21,33 +39,37 @@ pub fn device_query(device: DeviceState, keycode: Keycode) -> bool {
 }
 
 pub fn check_for_input(device: &DeviceState) -> Vec<bool> {
-    return
-        vec![
+    return vec![
         device_query(device.clone(), Keycode::Left),
         device_query(device.clone(), Keycode::Right),
         device_query(device.clone(), Keycode::Up),
         device_query(device.clone(), Keycode::Down),
         device_query(device.clone(), Keycode::Enter),
-        ]; 
+    ];
 }
 
-impl Term_State {
+impl TermState {
+    pub fn action(&mut self) {
+        
+    }
     pub fn draw(&self) {
 
+        //clear screen
         crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
 
         //print screen
-        for (index ,item) in self.screen_lines.iter().enumerate() {
-            println!("{} : {item}", index);
-        }
+        //widgets
+        Widgets::label("Test".blue());
+        
     }
     pub fn state(mut self) {
         let device = DeviceState::new();
+
         loop {
             //control checks
-        
+
             let controls: Vec<bool> = check_for_input(&device);
-            
+
             //left
             //right
             //up
@@ -56,47 +78,36 @@ impl Term_State {
             let let_button_clone = self.let_button.clone();
 
             if !self.let_button {
-
+                if controls[2] {
+                    self.current_index += 1;
+                }
                 if controls[3] {
-                    self.screen_lines.push("Pressed down".red());
+                    self.current_index -= 1;
                 }
                 if controls[4] {
-                    self.screen_lines.push("Pressed Enter".red());
+                    self.action();
                 }
                 if controls[2] {
-                    self.screen_lines.remove(self.screen_lines.len() - 1);
+
                 }
 
                 self.let_button = true;
-
             }
-            
 
-            if !controls.iter().all(|f| *f == false)  {
-
+            if !controls.iter().all(|f| *f == false) {
                 if !let_button_clone {
-
                     self.draw();
-
                 }
-
-            }
-            else {
-
+            } else {
                 self.let_button = false;
-
             }
-            
-
         }
     }
     pub fn init() {
-        Term_State::state(Term_State::default());
+        TermState::state(TermState::default());
     }
 }
 
 fn main() {
-    
-   Term_State::init();
-
+    TermState::init();
 }
