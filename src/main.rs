@@ -28,21 +28,20 @@ pub fn check_for_input(device: &DeviceState) -> Vec<bool> {
         device_query(device.clone(), Keycode::Up),
         device_query(device.clone(), Keycode::Down),
         device_query(device.clone(), Keycode::Enter),
-        ];
+        ]; 
 }
 
 impl Term_State {
     pub fn draw(&self) {
 
-        crossterm::execute!(std::io::stdout(), Clear(ClearType::Purge)).unwrap();
-        
-        //print screen
-        for item in &self.screen_lines {
-            println!("{item}");
-        }
+        crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
 
+        //print screen
+        for (index ,item) in self.screen_lines.iter().enumerate() {
+            println!("{} : {item}", index);
+        }
     }
-    pub fn state(&mut self) {
+    pub fn state(mut self) {
         let device = DeviceState::new();
         loop {
             //control checks
@@ -54,33 +53,45 @@ impl Term_State {
             //up
             //down
             //enter
+            let let_button_clone = self.let_button.clone();
+
             if !self.let_button {
+
                 if controls[3] {
                     self.screen_lines.push("Pressed down".red());
                 }
                 if controls[4] {
-                    self.screen_lines.push("asdasd down".red());
+                    self.screen_lines.push("Pressed Enter".red());
                 }
                 if controls[2] {
-                    self.screen_lines.remove(0);
+                    self.screen_lines.remove(self.screen_lines.len() - 1);
                 }
+
+                self.let_button = true;
+
             }
             
 
-            if !controls.iter().all(|f| *f == false) {
+            if !controls.iter().all(|f| *f == false)  {
 
-                self.draw();
+                if !let_button_clone {
 
-                self.let_button = true;
+                    self.draw();
+
+                }
+
             }
             else {
+
                 self.let_button = false;
+
             }
+            
 
         }
     }
     pub fn init() {
-        Term_State::state(&mut Term_State::default());
+        Term_State::state(Term_State::default());
     }
 }
 
