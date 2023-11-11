@@ -3,12 +3,11 @@ use crossterm::terminal::{Clear, ClearType};
 use device_query::{DeviceState, Keycode};
 
 impl Widgets {
-
-    pub fn button(text : impl ToString + std::fmt::Display) {
+    pub fn button(text: impl ToString + std::fmt::Display) {
         println!("{text}");
     }
 
-    pub fn label(text : impl ToString + std::fmt::Display) {
+    pub fn label(text: impl ToString + std::fmt::Display) {
         println!("{text}");
     }
 }
@@ -18,7 +17,6 @@ struct Widgets {}
 
 #[derive(Clone, Debug)]
 struct TermState {
-    screen_lines: Vec<ColoredString>,
     let_button: bool,
     //navigation
     current_index: usize,
@@ -27,7 +25,6 @@ struct TermState {
 impl Default for TermState {
     fn default() -> Self {
         Self {
-            screen_lines: Vec::new(),
             let_button: false,
             current_index: 0,
         }
@@ -49,18 +46,14 @@ pub fn check_for_input(device: &DeviceState) -> Vec<bool> {
 }
 
 impl TermState {
-    pub fn action(&mut self) {
-        
-    }
+    pub fn action(&mut self) {}
     pub fn draw(&self) {
-
         //clear screen
         crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
 
         //print screen
         //widgets
         Widgets::label("Test".blue());
-        
     }
     pub fn state(mut self) {
         let device = DeviceState::new();
@@ -87,9 +80,7 @@ impl TermState {
                 if controls[4] {
                     self.action();
                 }
-                if controls[2] {
-
-                }
+                if controls[2] {}
 
                 self.let_button = true;
             }
