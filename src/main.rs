@@ -1,25 +1,55 @@
-use colored::{ColoredString, Colorize};
 use crossterm::terminal::{Clear, ClearType};
 use device_query::{DeviceState, Keycode};
 
-impl Widgets {
-    pub fn button(text: impl ToString + std::fmt::Display) {
-        println!("{text}");
+pub trait Keymap {
+    fn device_query(device: DeviceState, keycode: Keycode) -> bool {
+        return device.query_keymap().contains(&keycode);
     }
-
-    pub fn label(text: impl ToString + std::fmt::Display) {
-        println!("{text}");
+    fn check_for_input(&self, device: DeviceState) -> Vec<bool> {
+        return vec![
+            Self::device_query(device.clone(), Keycode::Left),
+            Self::device_query(device.clone(), Keycode::Right),
+            Self::device_query(device.clone(), Keycode::Up),
+            Self::device_query(device.clone(), Keycode::Down),
+            Self::device_query(device.clone(), Keycode::Enter),
+        ];
     }
 }
 
-#[derive(Clone, Debug)]
-struct Widgets {}
+impl Keymap for TermState {}
+impl Keymap for Response {}
+impl Keymap for Widget {}
+
+pub struct Response {
+    take_action: bool,
+}
+
+impl Response {
+    pub fn listen_for_action(&self) -> Vec<bool> {
+        self.check_for_input(DeviceState::new())
+    }
+}
+
+pub struct Widget {}
+
+impl Widget {
+    pub fn ui<R>(device : &DeviceState, _widgets: impl FnOnce(&mut Widget) -> R) {}
+    fn button(&self, text: impl ToString + std::fmt::Display) {
+        println!("{}", text);
+    }
+    
+    fn label(&self, text: impl ToString + std::fmt::Display) {
+        println!("{}", text);
+    }
+}
 
 #[derive(Clone, Debug)]
 struct TermState {
     let_button: bool,
     //navigation
-    current_index: usize,
+    current_index: i64,
+
+    device: DeviceState,
 }
 
 impl Default for TermState {
@@ -27,48 +57,42 @@ impl Default for TermState {
         Self {
             let_button: false,
             current_index: 0,
+            device: DeviceState::new(),
         }
     }
 }
 
-pub fn device_query(device: DeviceState, keycode: Keycode) -> bool {
-    return device.query_keymap().contains(&keycode);
+pub trait Gui {
+    fn action(&mut self) {}
+    fn draw(&self) {}
+    fn state(&mut self) {}
 }
 
-pub fn check_for_input(device: &DeviceState) -> Vec<bool> {
-    return vec![
-        device_query(device.clone(), Keycode::Left),
-        device_query(device.clone(), Keycode::Right),
-        device_query(device.clone(), Keycode::Up),
-        device_query(device.clone(), Keycode::Down),
-        device_query(device.clone(), Keycode::Enter),
-    ];
-}
-
-impl TermState {
-    pub fn action(&mut self) {}
-    pub fn draw(&self) {
+impl Gui for TermState {
+    fn action(&mut self) {}
+    fn draw(&self) {
         //clear screen
         crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
 
         //print screen
         //widgets
-        Widgets::label("Test".blue());
+        Widget::ui(&self.device, |ui| {
+            ui.label("text");
+        });
+        println!("Ez hülye");
     }
-    pub fn state(mut self) {
-        let device = DeviceState::new();
-
+    fn state(&mut self) {
         loop {
-            //control checks
+            //controls
 
-            let controls: Vec<bool> = check_for_input(&device);
-
+            let controls: Vec<bool> = self.check_for_input(self.device.to_owned());
+            let let_button_clone = self.let_button.clone();
+            
             //left
             //right
             //up
             //down
             //enter
-            let let_button_clone = self.let_button.clone();
 
             if !self.let_button {
                 if controls[2] {
@@ -92,10 +116,14 @@ impl TermState {
             } else {
                 self.let_button = false;
             }
+            
         }
     }
+}
+
+impl TermState {
     pub fn init() {
-        TermState::state(TermState::default());
+        TermState::state(&mut TermState::default());
     }
 }
 
