@@ -18,7 +18,7 @@ pub trait Keymap {
 
 impl Keymap for TermState {}
 impl Keymap for Response {}
-impl Keymap for Widget {}
+
 
 pub struct Response {
     take_action: bool,
@@ -30,10 +30,13 @@ impl Response {
     }
 }
 
-pub struct Widget {}
+pub struct Widget;
 
 impl Widget {
-    pub fn ui<R>(device : &DeviceState, _widgets: impl FnOnce(&mut Widget) -> R) {}
+    fn new() -> Self {
+        Widget
+    }
+
     fn button(&self, text: impl ToString + std::fmt::Display) {
         println!("{}", text);
     }
@@ -74,12 +77,10 @@ impl Gui for TermState {
         //clear screen
         crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
 
-        //print screen
         //widgets
-        Widget::ui(&self.device, |ui| {
+        self.ui(&self.device, |ui|{
             ui.label("text");
         });
-        println!("Ez hülye");
     }
     fn state(&mut self) {
         loop {
@@ -122,8 +123,16 @@ impl Gui for TermState {
 }
 
 impl TermState {
+    //entrypoint
     pub fn init() {
         TermState::state(&mut TermState::default());
+    }
+    fn ui<R, F>(&self, device: &DeviceState, widgets: F)
+    where
+        F: FnOnce(&mut Widget) -> R,
+    {
+        let mut widget = Widget::new();
+        widgets(&mut widget);
     }
 }
 
