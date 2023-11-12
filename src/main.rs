@@ -1,4 +1,6 @@
-use crossterm::terminal::{Clear, ClearType};
+use std::{fmt::{Debug, Display}, str::FromStr};
+
+use crossterm::{terminal::{Clear, ClearType}, style::Stylize};
 use device_query::{DeviceState, Keycode};
 
 pub trait Keymap {
@@ -37,13 +39,27 @@ impl Widget {
         Widget
     }
 
-    fn button(&self, text: impl ToString + std::fmt::Display) {
+    fn button<T>(&self, text: T, should_be_highlighted : bool) -> Response 
+    where
+        T: Display + Clone + Stylize, // Ensure T implements the required traits
+        <T as Stylize>::Styled: Display,
+    {
         println!("{}", text);
+        if should_be_highlighted {
+            println!("{}", text.clone().on_red());
+        }
+        Response { take_action: Response::device_query(DeviceState::new(), Keycode::Enter) }
     }
     
-    fn label(&self, text: impl ToString + std::fmt::Display) {
+    fn label<T>(&self, text: T)
+    where
+        T: Display + Clone + Stylize, // Ensure T implements the required traits
+        <T as Stylize>::Styled: Display,
+    {
         println!("{}", text);
     }
+
+
 }
 
 #[derive(Clone, Debug)]
@@ -66,23 +82,27 @@ impl Default for TermState {
 }
 
 pub trait Gui {
-    fn action(&mut self) {}
     fn draw(&self) {}
     fn state(&mut self) {}
 }
 
 impl Gui for TermState {
-    fn action(&mut self) {}
     fn draw(&self) {
         //clear screen
         crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
-
+        println!("{}", "asd".red());
         //widgets
         self.ui(&self.device, |ui|{
-            ui.label("text");
+            if ui.button("Test_button", true).take_action {
+                println!("asd");
+            };
         });
     }
     fn state(&mut self) {
+
+        //draw first image
+        self.draw();
+        let start_time = std::time::Instant::now();
         loop {
             //controls
 
@@ -103,14 +123,14 @@ impl Gui for TermState {
                     self.current_index -= 1;
                 }
                 if controls[4] {
-                    self.action();
+
                 }
                 if controls[2] {}
 
                 self.let_button = true;
             }
 
-            if !controls.iter().all(|f| *f == false) {
+            if !controls.iter().all(|f| *f == false) || start_time.elapsed().as_secs() % 2 == 0 {
                 if !let_button_clone {
                     self.draw();
                 }
