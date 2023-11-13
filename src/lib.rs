@@ -49,22 +49,24 @@ pub mod lib {
     }
 
     pub trait Keymap {
-        fn device_query(device: DeviceState, keycode: Keycode) -> bool {
-            return device.query_keymap().contains(&keycode);
-        }
-        fn check_for_input(&self, device: DeviceState) -> Keycodes {
+        
+        fn check_for_input(device: DeviceState) -> Keycodes {
+
+            fn device_query(device: DeviceState, keycode: Keycode) -> bool {
+                return device.query_keymap().contains(&keycode);
+            }
+
             return Keycodes {
-                left: Self::device_query(device.clone(), Keycode::Left),
-                right: Self::device_query(device.clone(), Keycode::Right),
-                up: Self::device_query(device.clone(), Keycode::Up),
-                down: Self::device_query(device.clone(), Keycode::Down),
-                enter: Self::device_query(device.clone(), Keycode::Enter),
+                left: device_query(device.clone(), Keycode::Left),
+                right: device_query(device.clone(), Keycode::Right),
+                up: device_query(device.clone(), Keycode::Up),
+                down: device_query(device.clone(), Keycode::Down),
+                enter: device_query(device.clone(), Keycode::Enter),
             };
         }
     }
 
     impl Keymap for TermState {}
-    impl Keymap for Response {}
 
     pub struct Response {
         pub take_action: bool,
@@ -72,7 +74,7 @@ pub mod lib {
 
     impl Response {
         pub fn listen_for_action(&self) -> Keycodes {
-            self.check_for_input(DeviceState::new())
+            TermState::check_for_input(DeviceState::new())
         }
     }
 
@@ -94,7 +96,7 @@ pub mod lib {
                 println!("{}", text.clone().on_red());
             }
             Response {
-                take_action: Response::device_query(DeviceState::new(), Keycode::Enter),
+                take_action: TermState::check_for_input(DeviceState::new()).enter,
             }
         }
 
@@ -111,7 +113,9 @@ pub mod lib {
             //label behavior
             println!("{}", text);
         }
+    
     }
+
 
 
     //gui struct
@@ -147,7 +151,7 @@ pub mod lib {
             loop {
                 //controls
     
-                let controls = self.check_for_input(self.device.to_owned());
+                let controls = TermState::check_for_input(self.device.to_owned());
                 let let_button_clone = self.let_button.clone();
     
                 //left
@@ -186,7 +190,7 @@ pub mod lib {
         pub fn init() {
             TermState::state(&mut TermState::default());
         }
-        pub fn ui<R, F>(&self, _device: &DeviceState, widgets: F)
+        pub fn ui<R, F>(&self, device: &DeviceState, widgets: F)
         where
             F: FnOnce(&mut Widget) -> R,
         {
