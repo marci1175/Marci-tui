@@ -128,11 +128,7 @@ pub mod lib {
     }
 
     pub trait Gui {
-        #[allow(unconditional_recursion)]
-        fn draw(&self) {
-            //draw first img
-            self.draw()
-        }
+        fn draw(&self) {}
         fn state(&mut self) {}
     }
 

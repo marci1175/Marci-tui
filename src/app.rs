@@ -17,7 +17,7 @@ impl Gui for TermState {
     }
     fn state(&mut self) {
         //draw first image
-        let start_time = std::time::Instant::now();
+        self.draw();
         loop {
             //controls
 
@@ -42,9 +42,7 @@ impl Gui for TermState {
                 self.let_button = true;
             }
 
-            println!("{:?}", controls.iter());
-
-            if !controls.iter().all(|f| f == false) || start_time.elapsed().as_secs() % 2 == 0 {
+            if !controls.iter().all(|f| f == false){
                 if !let_button_clone {
                     self.draw();
                 }
