@@ -17,12 +17,11 @@ impl Gui for TermState {
     }
     fn state(&mut self) {
         //draw first image
-        self.draw();
         let start_time = std::time::Instant::now();
         loop {
             //controls
 
-            let controls: Vec<bool> = self.check_for_input(self.device.to_owned());
+            let controls = self.check_for_input(self.device.to_owned());
             let let_button_clone = self.let_button.clone();
 
             //left
@@ -32,19 +31,20 @@ impl Gui for TermState {
             //enter
 
             if !self.let_button {
-                if controls[2] {
+                if controls.up {
                     self.current_index += 1;
                 }
-                if controls[3] {
+                if controls.down {
                     self.current_index -= 1;
                 }
-                if controls[4] {}
-                if controls[2] {}
+                if controls.enter {}
 
                 self.let_button = true;
             }
 
-            if !controls.iter().all(|f| *f == false) || start_time.elapsed().as_secs() % 2 == 0 {
+            println!("{:?}", controls.iter());
+
+            if !controls.iter().all(|f| f == false) || start_time.elapsed().as_secs() % 2 == 0 {
                 if !let_button_clone {
                     self.draw();
                 }

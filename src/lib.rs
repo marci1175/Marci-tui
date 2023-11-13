@@ -6,18 +6,60 @@ pub mod lib {
     use crossterm::style::Stylize;
     use device_query::{DeviceState, Keycode};
 
+    #[derive(Clone, Copy, Debug)]
+    pub struct Keycodes {
+        pub left: bool,
+        pub right: bool,
+        pub up: bool,
+        pub down: bool,
+        pub enter: bool
+    }
+
+    #[derive(Debug)]
+    pub struct KeyIterator {
+        keycodes: Keycodes,
+        index: usize,
+    }
+
+    impl Keycodes {
+        pub fn iter(&self) -> KeyIterator {
+            KeyIterator {
+                keycodes: self.clone(),
+                index: 0,
+            }
+        }
+    }
+
+    impl Iterator for KeyIterator {
+        type Item = bool;
+    
+        fn next(&mut self) -> Option<Self::Item> {
+            let result = match self.index {
+                0 => Some(self.keycodes.left),
+                1 => Some(self.keycodes.right),
+                2 => Some(self.keycodes.up),
+                3 => Some(self.keycodes.down),
+                4 => Some(self.keycodes.enter),
+                _ => None,
+            };
+    
+            self.index += 1;
+            result
+        }
+    }
+
     pub trait Keymap {
         fn device_query(device: DeviceState, keycode: Keycode) -> bool {
             return device.query_keymap().contains(&keycode);
         }
-        fn check_for_input(&self, device: DeviceState) -> Vec<bool> {
-            return vec![
-                Self::device_query(device.clone(), Keycode::Left),
-                Self::device_query(device.clone(), Keycode::Right),
-                Self::device_query(device.clone(), Keycode::Up),
-                Self::device_query(device.clone(), Keycode::Down),
-                Self::device_query(device.clone(), Keycode::Enter),
-            ];
+        fn check_for_input(&self, device: DeviceState) -> Keycodes {
+            return Keycodes {
+                left: Self::device_query(device.clone(), Keycode::Left),
+                right: Self::device_query(device.clone(), Keycode::Right),
+                up: Self::device_query(device.clone(), Keycode::Up),
+                down: Self::device_query(device.clone(), Keycode::Down),
+                enter: Self::device_query(device.clone(), Keycode::Enter),
+            };
         }
     }
 
@@ -29,7 +71,7 @@ pub mod lib {
     }
 
     impl Response {
-        pub fn listen_for_action(&self) -> Vec<bool> {
+        pub fn listen_for_action(&self) -> Keycodes {
             self.check_for_input(DeviceState::new())
         }
     }
@@ -64,6 +106,8 @@ pub mod lib {
         }
     }
 
+
+    //gui struct
     #[derive(Clone, Debug)]
     pub struct TermState {
         pub let_button: bool,
@@ -84,7 +128,11 @@ pub mod lib {
     }
 
     pub trait Gui {
-        fn draw(&self) {}
+        #[allow(unconditional_recursion)]
+        fn draw(&self) {
+            //draw first img
+            self.draw()
+        }
         fn state(&mut self) {}
     }
 
@@ -93,7 +141,7 @@ pub mod lib {
         pub fn init() {
             TermState::state(&mut TermState::default());
         }
-        pub fn ui<R, F>(&self, device: &DeviceState, widgets: F)
+        pub fn ui<R, F>(&self, _device: &DeviceState, widgets: F)
         where
             F: FnOnce(&mut Widget) -> R,
         {
