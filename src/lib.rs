@@ -1,8 +1,11 @@
+mod win;
 mod app;
 
 pub mod lib {
-    use std::fmt::{Debug, Display};
 
+    use std::fmt::Display;
+    use crate::win::windows_bindings::win_messagebox;
+    use chrono::{DateTime, Local};
     use crossterm::{style::Stylize, terminal::{Clear, ClearType}};
     use device_query::{DeviceState, Keycode};
 
@@ -100,27 +103,42 @@ pub mod lib {
             }
         }
 
-        pub fn time_label(&self) {
-            let now = std::time::Instant::now();
+        pub fn time_widget(&self) {
+            let now: DateTime<Local> = Local::now();
             println!("{:?}", now);
         }
 
         pub fn label<T>(&self, text: T)
         where
-            T: Display + Clone + Stylize,
+            T: ToString + Display + Stylize,
             <T as Stylize>::Styled: Display,
         {
             //label behavior
             println!("{}", text);
         }
     
+        pub fn win_messagebox(&self, lptext: impl ToString, lpcaption : impl ToString, icon : u32) {
+            win_messagebox(lptext, lpcaption, icon);
+        }
     }
 
+    #[derive(Clone, Debug)]
+    pub struct TermSettings {
+        pub window_name: String,
+        pub constantly_update: bool,
+    }  
 
+    #[derive(Debug, Clone)]
+    pub struct TermProps {
+        pub window_size: String,
+    }   
 
     //gui struct
     #[derive(Clone, Debug)]
     pub struct TermState {
+        pub props: TermProps,
+        pub settings: TermSettings,
+
         pub let_button: bool,
         //navigation
         pub current_index: i64,
@@ -131,6 +149,15 @@ pub mod lib {
     impl Default for TermState {
         fn default() -> Self {
             Self {
+                props: TermProps {
+                    window_size: "window_size().unwrap(),".into(),
+                },
+
+                settings: TermSettings {
+                    window_name: "marci_tui test".into(),
+                    constantly_update: false,
+                },
+
                 let_button: false,
                 current_index: 0,
                 device: DeviceState::new(),
@@ -149,8 +176,12 @@ pub mod lib {
             //draw first image
             self.draw();
             loop {
+
+                //win bindings
+
+
+
                 //controls
-    
                 let controls = TermState::check_for_input(self.device.to_owned());
                 let let_button_clone = self.let_button.clone();
     
@@ -159,7 +190,6 @@ pub mod lib {
                 //up
                 //down
                 //enter
-    
                 if !self.let_button {
                     if controls.up {
                         self.current_index += 1;
@@ -172,7 +202,7 @@ pub mod lib {
                     self.let_button = true;
                 }
     
-                if !controls.iter().all(|f| f == false){
+                if !controls.iter().all(|f| f == false) || self.settings.constantly_update {
                     if !let_button_clone {
                         //Redraw screen
                         crossterm::execute!(std::io::stdout(), Clear(ClearType::All)).unwrap();
@@ -190,7 +220,7 @@ pub mod lib {
         pub fn init() {
             TermState::state(&mut TermState::default());
         }
-        pub fn ui<R, F>(&self, device: &DeviceState, widgets: F)
+        pub fn ui<R, F>(&self, _device: &DeviceState, widgets: F)
         where
             F: FnOnce(&mut Widget) -> R,
         {
