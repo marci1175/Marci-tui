@@ -166,7 +166,7 @@ pub mod lib {
     }
 
     pub trait Gui {
-        fn draw(&self) {}
+        fn draw(&mut self) {}
     }
     pub trait Screen {
         fn state(&mut self) {}
