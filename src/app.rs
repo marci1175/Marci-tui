@@ -1,4 +1,3 @@
-use windows_sys::Win32::UI::WindowsAndMessaging::MB_ICONASTERISK;
 use crate::lib::{Gui, TermState};
 
 impl Gui for TermState {
